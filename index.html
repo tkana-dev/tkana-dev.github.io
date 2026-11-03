@@ -1,42 +1,85 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>tkana</title>
-  <meta name="description" content="Personal projects by tkana — an iOS writing app, and tooling for Claude Code." />
+  <meta name="description" content="tkana の個人開発。iOSアプリ（Cue、Omoi）と、Claude Code 向けのコマンドラインツール（Subagent Insights）を公開しています。" />
   <link rel="canonical" href="https://tkana.dev/" />
 
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://tkana.dev/" />
   <meta property="og:title" content="tkana" />
-  <meta property="og:description" content="Personal projects by tkana — an iOS writing app, and tooling for Claude Code." />
+  <meta property="og:description" content="tkana の個人開発。iOSアプリ（Cue、Omoi）と、Claude Code 向けのコマンドラインツール（Subagent Insights）を公開しています。" />
   <meta name="twitter:card" content="summary" />
 
   <style>
     :root {
-      --bg: #faf7f2;
-      --surface: #f3eee6;
-      --text: #241f1a;
-      --muted: #6d635a;
-      --border: rgba(36, 31, 26, 0.12);
-      --accent: #9a5b34;
-      --accent-soft: #b87c4f;
+      --bg: #f5f5f7;
+      --surface: #ffffff;
+      --text: #1d1d1f;
+      --muted: #6e6e73;
+      --border: rgba(0, 0, 0, 0.1);
+      --accent: #0a66c2;
+      --accent-soft: #3d8bd9;
       --serif: ui-serif, Georgia, "Hiragino Mincho ProN", "Yu Mincho", serif;
       --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
       --step: 1.5rem;
     }
 
+    /* 初めはシステムの設定に合わせる。切り替えボタンを押すと、data-theme で上書きする（保存はしない）。 */
     @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #17140f;
-        --surface: #201c16;
-        --text: #ece5da;
-        --muted: #a2988b;
-        --border: rgba(236, 229, 218, 0.14);
-        --accent: #d99a6e;
-        --accent-soft: #e8b891;
+      :root:not([data-theme="light"]) {
+        --bg: #111113;
+        --surface: #1c1c1e;
+        --text: #f2f2f4;
+        --muted: #9a9aa1;
+        --border: rgba(255, 255, 255, 0.12);
+        --accent: #5aa9ff;
+        --accent-soft: #8cc4ff;
       }
+    }
+
+    :root[data-theme="dark"] {
+      --bg: #111113;
+      --surface: #1c1c1e;
+      --text: #f2f2f4;
+      --muted: #9a9aa1;
+      --border: rgba(255, 255, 255, 0.12);
+      --accent: #5aa9ff;
+      --accent-soft: #8cc4ff;
+    }
+
+    :root { color-scheme: light; }
+    :root[data-theme="dark"] { color-scheme: dark; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) { color-scheme: dark; }
+    }
+
+    /* ライトとダークの切り替え。押せる大きさは44pt（Apple HIG、WCAG 2.2 達成基準 2.5.8 を満たす）。 */
+    .theme-toggle {
+      position: absolute;
+      top: var(--step);
+      right: var(--step);
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border: 0.5px solid var(--border);
+      border-radius: 50%;
+      background: var(--surface);
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .theme-toggle:hover { color: var(--text); }
+    .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .theme-toggle svg { width: 20px; height: 20px; }
+    .theme-toggle .icon-sun { display: none; }
+    :root[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+    :root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .theme-toggle .icon-sun { display: block; }
+      :root:not([data-theme="light"]) .theme-toggle .icon-moon { display: none; }
     }
 
     * { box-sizing: border-box; }
@@ -52,6 +95,7 @@
     }
 
     main {
+      position: relative;
       max-width: 34rem;
       margin: 0 auto;
       padding: calc(var(--step) * 2) var(--step) calc(var(--step) * 3);
@@ -65,8 +109,8 @@
       margin: 0 0 0.5rem;
     }
 
+    /* 日本語の文なので、明朝ではなく本文と同じゴシックにする（オーナーの指摘）。 */
     .lead {
-      font-family: var(--serif);
       font-size: 1.0625rem;
       color: var(--muted);
       margin: 0 0 calc(var(--step) * 2);
@@ -76,7 +120,6 @@
       font-size: 0.75rem;
       font-weight: 500;
       letter-spacing: 0.14em;
-      text-transform: uppercase;
       color: var(--muted);
       margin: 0 0 var(--step);
     }
@@ -91,18 +134,36 @@
       margin-bottom: 0.75rem;
     }
 
+    /* アプリのアイコン。名前の横に置き、iOS のホーム画面と同じくらいの角の丸み（約22%）にする。名前と同じ内容なので alt は空。 */
+    .app-icon {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 22%;
+      border: 0.5px solid var(--border);
+      vertical-align: middle;
+      margin-right: 0.625rem;
+    }
+
+    /* 名前の行。左にアイコンと名前、右に使った技術を小さく置く。 */
     .project h3 {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
       font-family: var(--serif);
       font-size: 1.1875rem;
       font-weight: 400;
       margin: 0 0 0.375rem;
     }
 
+    /* 説明と下の行のリンクの間だけを空ける。最後の行には下の余白を付けない（カードの上下の余白をそろえるため）。 */
     .project p {
       margin: 0 0 0.75rem;
       color: var(--muted);
       font-size: 0.9375rem;
     }
+
+    .project p.meta { margin: 0; }
 
     .meta {
       display: flex;
@@ -112,27 +173,39 @@
       margin: 0;
     }
 
+    /* リンクは、文の中に置かず単独で並べているので、下線を出さず色で示す（WCAG 2.2 達成基準 1.4.1 は文中のリンクが対象）。
+       指したときとキーボードで選んだときだけ、細い下線を少し離して出す。 */
     a {
       color: var(--accent);
-      text-decoration-thickness: 0.5px;
-      text-underline-offset: 3px;
+      text-decoration: none;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 0.3em;
     }
 
-    a:hover { color: var(--accent-soft); }
+    a:hover, a:focus-visible { text-decoration-line: underline; }
 
-    .project h3 a {
-      color: var(--text);
-      text-decoration-color: var(--border);
+    .project h3 a { color: var(--text); display: inline-flex; align-items: center; }
+    /* 使った技術のバッジ。押せないので、リンクの色は使わない。 */
+    .project h3 .tech {
+      flex-shrink: 0;
+      font-family: var(--sans);
+      font-size: 0.75rem;
+      line-height: 1;
+      color: var(--muted);
+      letter-spacing: 0.02em;
+      padding: 0.3rem 0.6rem;
+      border: 0.5px solid var(--border);
+      border-radius: 999px;
+      background: var(--bg);
     }
+    .project h3 a:hover, .project h3 a:focus-visible { text-decoration-color: var(--accent); }
 
-    .project h3 a:hover { text-decoration-color: var(--accent); }
-
-    footer {
-      border-top: 0.5px solid var(--border);
-      padding-top: var(--step);
+    /* プロフィールのリンク。名前と紹介文のすぐ下に置く。 */
+    .profile-links {
       display: flex;
       gap: 1.25rem;
       font-size: 0.9375rem;
+      margin: calc(var(--step) * -1.5) 0 calc(var(--step) * 2);
     }
 
     @media (min-width: 40rem) {
@@ -143,98 +216,71 @@
 </head>
 <body>
   <main>
+    <button type="button" class="theme-toggle" aria-label="ダークモードに切り替える">
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.2M12 19.8V22M4.9 4.9l1.6 1.6M17.5 17.5l1.6 1.6M2 12h2.2M19.8 12H22M4.9 19.1l1.6-1.6M17.5 6.5l1.6-1.6"/></svg>
+    </button>
     <h1>tkana</h1>
-    <p class="lead">I build iOS apps and command-line tools on my own time.</p>
+    <p class="lead">iPhoneのアプリとちょっとしたツールを作っています。</p>
+    <nav class="profile-links" aria-label="プロフィール">
+      <a href="https://github.com/tkana-dev">GitHub</a>
+      <a href="https://x.com/tkana_dev">X</a>
+      <a href="https://zenn.dev/tkana">Zenn</a>
+    </nav>
 
     <section>
-      <h2>Projects</h2>
+      <h2>iOSアプリ</h2>
 
       <article class="project">
-        <h3><a href="https://apps.apple.com/jp/app/omoi-%E6%8E%A8%E3%81%97%E6%B4%BB%E3%83%A1%E3%83%A2/id6786299380">Omoi</a></h3>
+        <h3><a href="https://apps.apple.com/jp/app/id6787348204"><img class="app-icon" src="cue-icon.png" alt="" width="40" height="40">Cue</a><span class="tech">SwiftUI</span></h3>
         <p>
-          An iOS app for the writing that fandom produces — letters, radio submissions,
-          conversations worth keeping — with statistics to look back through.
+          タスクの「期限」だけではなく「いつから」「いつまでに」やるかを管理できるToDoアプリ。
         </p>
         <p class="meta">
-          <span>SwiftUI</span>
-          <a href="https://apps.apple.com/jp/app/omoi-%E6%8E%A8%E3%81%97%E6%B4%BB%E3%83%A1%E3%83%A2/id6786299380">App Store</a>
-          <span>Japan only</span>
+          <a href="https://apps.apple.com/jp/app/id6787348204">App Store</a>
         </p>
       </article>
 
       <article class="project">
-        <h3><a href="https://github.com/tkana-dev/subagent-insights">Subagent Insights</a></h3>
+        <h3><a href="https://apps.apple.com/jp/app/omoi-%E6%8E%A8%E3%81%97%E6%B4%BB%E3%83%A1%E3%83%A2/id6786299380"><img class="app-icon" src="omoi-icon.png" alt="" width="40" height="40">Omoi</a><span class="tech">SwiftUI</span></h3>
         <p>
-          Claude Code leaves a transcript behind for every subagent run. This reads them
-          and reports how the agents actually behave — deterministically, with no LLM
-          call and no network access.
+          ファンレター、番組へのメール投稿、残しておきたい会話など、推し活関連のテキストを記録し、統計で振り返るメモアプリ。
         </p>
         <p class="meta">
-          <span>TypeScript</span>
+          <a href="https://apps.apple.com/jp/app/omoi-%E6%8E%A8%E3%81%97%E6%B4%BB%E3%83%A1%E3%83%A2/id6786299380">App Store</a>
+        </p>
+      </article>
+
+    </section>
+
+    <section>
+      <h2>CLIツール</h2>
+
+      <article class="project">
+        <h3><a href="https://github.com/tkana-dev/subagent-insights">Subagent Insights</a><span class="tech">TypeScript</span></h3>
+        <p>
+          Claude Code がサブエージェントを動かすたびに残す記録を読み、LLM もネットワークも使わずに、エージェントの実際の振る舞いを集計して報告するコマンドラインツール。
+        </p>
+        <p class="meta">
           <a href="https://github.com/tkana-dev/subagent-insights">GitHub</a>
           <a href="https://www.npmjs.com/package/subagent-insights">npm</a>
         </p>
       </article>
     </section>
 
-    <section>
-      <h2>Writing</h2>
-
-      <article class="project">
-        <h3><a href="https://zenn.dev/tkana/articles/github-actions-free-tier-macos-audit">GitHub Actionsを棚卸ししたら、CIに残す理由があったのは3つだけだった</a></h3>
-        <p>
-          After moving heavy macOS jobs to local pre-push hooks, only three CI tasks turned
-          out to truly need cloud execution: AI code review, reproducible release builds, and
-          multi-OS test matrices.
-        </p>
-        <p class="meta">
-          <span>Zenn</span>
-          <span>Japanese</span>
-        </p>
-      </article>
-
-      <article class="project">
-        <h3><a href="https://zenn.dev/tkana/articles/claude-code-premise-in-my-own-rules">Claude Codeの「仕様なので人がやって」を辿ったら、私が書かせた記録だった</a></h3>
-        <p>
-          A wrong premise about iOS Keychain behavior got written into my own Claude Code
-          rules as "verified," and traced back to a measurement command that never measured
-          what it claimed to.
-        </p>
-        <p class="meta">
-          <span>Zenn</span>
-          <span>Japanese</span>
-        </p>
-      </article>
-
-      <article class="project">
-        <h3><a href="https://zenn.dev/tkana/articles/gemini-free-tier-ai-review">Geminiの無料枠でCIのAIレビューを回していたら、レビューが走っていなかった</a></h3>
-        <p>
-          My CI's AI code review looked healthy while it silently fell back to a weaker model
-          and swallowed rate-limit errors as "no issues found."
-        </p>
-        <p class="meta">
-          <span>Zenn</span>
-          <span>Japanese</span>
-        </p>
-      </article>
-
-      <article class="project">
-        <h3><a href="https://zenn.dev/tkana/articles/claude-code-subagent-tool-result">サブエージェントの通信簿を作ったら、自分の指示の穴が出てきた</a></h3>
-        <p>
-          A tool that scored my Claude Code subagents turned out to be measuring nothing,
-          and the defects it hid say more about how I brief agents than about the agents.
-        </p>
-        <p class="meta">
-          <span>Zenn</span>
-          <span>Japanese</span>
-        </p>
-      </article>
-    </section>
-
-    <footer>
-      <a href="https://github.com/tkana-dev">GitHub</a>
-      <a href="https://x.com/tkana_dev">X</a>
-    </footer>
   </main>
+  <script>
+    // 切り替えボタン。初めはシステムの設定（prefers-color-scheme）のまま。押すたびにライトとダークを入れ替える。
+    (() => {
+      const root = document.documentElement;
+      const button = document.querySelector('.theme-toggle');
+      const media = matchMedia('(prefers-color-scheme: dark)');
+      const isDark = () => (root.dataset.theme ? root.dataset.theme === 'dark' : media.matches);
+      const update = () => button.setAttribute('aria-label', isDark() ? 'ライトモードに切り替える' : 'ダークモードに切り替える');
+      button.addEventListener('click', () => { root.dataset.theme = isDark() ? 'light' : 'dark'; update(); });
+      media.addEventListener('change', update);
+      update();
+    })();
+  </script>
 </body>
 </html>
